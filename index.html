@@ -1,1 +1,642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Laberinto Fénix - Casino</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #1a0e0e 0%, #2d1810 50%, #1a0e0e 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .preloader {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #1a0e0e 0%, #2d1810 50%, #1a0e0e 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .preloader.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .preloader-logo {
+      max-width: 200px;
+      margin-bottom: 40px;
+      animation: pulse 2s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(255, 140, 0, 0.6));
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+      }
+    }
+
+    .progress-bar-container {
+      width: 300px;
+      height: 8px;
+      background: rgba(255, 140, 0, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 0 20px rgba(255, 140, 0, 0.3);
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff8c00, #ffd700, #ff8c00);
+      background-size: 200% 100%;
+      border-radius: 10px;
+      width: 0%;
+      animation: loadProgress 2s ease-out forwards, shimmerBar 1.5s linear infinite;
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+    }
+
+    @keyframes loadProgress {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    @keyframes shimmerBar {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    .loading-text {
+      margin-top: 20px;
+      color: #ffd700;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .game-container {
+      text-align: center;
+      padding: 20px;
+      max-width: 100%;
+      width: 100%;
+    }
+
+    .game-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #ffd700;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+      margin-bottom: 10px;
+      letter-spacing: 2px;
+    }
+
+    .game-subtitle {
+      font-size: 1rem;
+      color: #ff8c00;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+
+    .canvas-container {
+      position: relative;
+      display: inline-block;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 0 40px rgba(255, 140, 0, 0.3),
+                  inset 0 0 30px rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 140, 0, 0.4);
+      max-width: 95vw;
+    }
+
+    #mazeCanvas {
+      display: block;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Added mobile touch controls */
+    .mobile-controls {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      max-width: 300px;
+      margin: 20px auto;
+    }
+
+    .control-btn {
+      background: linear-gradient(145deg, #ff8c00, #ffa500);
+      border: 3px solid #ffd700;
+      border-radius: 15px;
+      padding: 20px;
+      font-size: 1.5rem;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .control-btn:active {
+      transform: scale(0.95);
+      box-shadow: 0 2px 10px rgba(255, 140, 0, 0.6);
+    }
+
+    .control-btn.up {
+      grid-column: 2;
+    }
+
+    .control-btn.left {
+      grid-column: 1;
+    }
+
+    .control-btn.down {
+      grid-column: 2;
+    }
+
+    .control-btn.right {
+      grid-column: 3;
+    }
+
+    .instructions {
+      margin-top: 25px;
+      padding: 20px;
+      background: rgba(255, 140, 0, 0.1);
+      border-radius: 15px;
+      border: 2px solid rgba(255, 140, 0, 0.3);
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .instructions h3 {
+      color: #ffd700;
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .instructions p {
+      color: #fff;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .keys {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+    }
+
+    .key {
+      background: linear-gradient(145deg, #ff8c00, #ffa500);
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 4px 15px rgba(255, 140, 0, 0.4);
+      border: 2px solid rgba(255, 215, 0, 0.5);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #2d1810 0%, #1a0e0e 100%);
+      margin: 10% auto;
+      padding: 40px;
+      border: 3px solid #ff8c00;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 500px;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(255, 140, 0, 0.6);
+      position: relative;
+      animation: modalSlideIn 0.4s ease-out;
+    }
+
+    @keyframes modalSlideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .close {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      color: #ffd700;
+      font-size: 35px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255, 140, 0, 0.2);
+      border: 2px solid rgba(255, 140, 0, 0.4);
+    }
+
+    .close:hover {
+      background: rgba(255, 140, 0, 0.3);
+      transform: rotate(90deg);
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+    }
+
+    .trophy-icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: bounce 1s ease infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .modal h2 {
+      color: #ffd700;
+      font-size: 2rem;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+      font-weight: 800;
+    }
+
+    .prize-display {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 140, 0, 0.15));
+      padding: 25px;
+      border-radius: 15px;
+      margin: 20px 0;
+      border: 2px solid rgba(255, 140, 0, 0.4);
+    }
+
+    .prize-text {
+      color: #ffd700;
+      font-size: 2.5rem;
+      font-weight: 800;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      margin: 10px 0;
+    }
+
+    .prize-description {
+      color: #fff;
+      font-size: 1.1rem;
+      margin-top: 10px;
+    }
+
+    .modal-btn {
+      background: linear-gradient(145deg, #ff8c00, #ffa500);
+      color: #fff;
+      border: 3px solid #ffd700;
+      padding: 15px 40px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 50px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 25px rgba(255, 140, 0, 0.5);
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .modal-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(255, 215, 0, 0.7);
+      background: linear-gradient(145deg, #ffa500, #ffb733);
+    }
+
+    .modal-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .confetti {
+      position: fixed;
+      width: 10px;
+      height: 10px;
+      background: #ffd700;
+      position: absolute;
+      animation: confetti-fall 3s linear forwards;
+    }
+
+    @keyframes confetti-fall {
+      to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .game-title {
+        font-size: 1.8rem;
+      }
+
+      .mobile-controls {
+        display: grid;
+      }
+
+      .keys {
+        display: none;
+      }
+
+      .instructions {
+        padding: 15px;
+      }
+
+      .modal-content {
+        padding: 30px 20px;
+        margin: 20% auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="preloader" id="preloader">
+    <img src="assets/logo.png" alt="Casino Fénix" class="preloader-logo" onerror="this.style.display='none'">
+    <div class="progress-bar-container">
+      <div class="progress-bar"></div>
+    </div>
+    <div class="loading-text">Cargando laberinto...</div>
+  </div>
+
+  <div class="game-container">
+    <h1 class="game-title">🔥 LABERINTO FÉNIX 🔥</h1>
+    <p class="game-subtitle">Encuentra tu camino hacia el premio del 150%</p>
+
+    <div class="canvas-container">
+      <canvas id="mazeCanvas" width="450" height="450"></canvas>
+    </div>
+
+    <!-- Added mobile touch controls -->
+    <div class="mobile-controls">
+      <button class="control-btn up" id="btnUp">↑</button>
+      <button class="control-btn left" id="btnLeft">←</button>
+      <button class="control-btn down" id="btnDown">↓</button>
+      <button class="control-btn right" id="btnRight">→</button>
+    </div>
+
+    <div class="instructions">
+      <h3>¿Cómo jugar?</h3>
+      <p>Usa las flechas del teclado o los botones para moverte</p>
+      <p>Encuentra el trofeo dorado para reclamar tu bono del 150%</p>
+      <p><strong>¡Solo tienes una oportunidad! El juego termina cuando reclames el premio.</strong></p>
+      <div class="keys">
+        <div class="key">↑ W</div>
+        <div class="key">← A</div>
+        <div class="key">↓ S</div>
+        <div class="key">→ D</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="winModal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="closeModal">&times;</span>
+      <div class="trophy-icon">🏆</div>
+      <h2>¡Felicitaciones!</h2>
+      <div class="prize-display">
+        <div class="prize-text">150%</div>
+        <div class="prize-description">¡Has ganado un bono del 150%!</div>
+      </div>
+      <button class="modal-btn" id="claimBtn">Reclamar Premio</button>
+    </div>
+  </div>
+
+  <script>
+    // Preloader
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('preloader').classList.add('hidden');
+      }, 2000);
+    });
+
+    const canvas = document.getElementById('mazeCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const CELL_SIZE = 30;
+    const MAZE_SIZE = 15;
+    const WALL_COLOR = '#2d1810';
+    const WALL_BORDER = '#ff8c00';
+    const PATH_COLOR = '#1a0e0e';
+    const PLAYER_COLOR = '#ffd700';
+    const PRIZE_COLOR = '#ffd700';
+
+    let player = { x: 1, y: 1 };
+    let prize = { x: 13, y: 8 }; // Prize positioned inside the maze in a reachable location
+    let gameWon = false;
+
+    const maze = [
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+      [1,0,1,1,1,0,1,0,1,1,1,1,1,0,1],
+      [1,0,1,0,0,0,0,0,0,0,0,0,1,0,1],
+      [1,0,1,0,1,1,1,1,1,1,1,0,1,0,1],
+      [1,0,0,0,1,0,0,0,0,0,0,0,1,0,1],
+      [1,1,1,1,1,0,1,1,1,1,1,1,1,0,1],
+      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1],
+      [1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
+      [1,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+      [1,1,1,0,1,1,1,1,1,0,1,0,1,1,1],
+      [1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+      [1,0,1,1,1,1,1,0,1,1,1,1,1,0,1],
+      [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+    ];
+
+    function drawMaze() {
+      for (let y = 0; y < MAZE_SIZE; y++) {
+        for (let x = 0; x < MAZE_SIZE; x++) {
+          if (maze[y][x] === 1) {
+            ctx.fillStyle = WALL_COLOR;
+            ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            ctx.strokeStyle = WALL_BORDER;
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+          } else {
+            ctx.fillStyle = PATH_COLOR;
+            ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+          }
+        }
+      }
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = PLAYER_COLOR;
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(
+        player.x * CELL_SIZE + CELL_SIZE / 2,
+        player.y * CELL_SIZE + CELL_SIZE / 2,
+        CELL_SIZE / 3,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    function drawPrize() {
+      const centerX = prize.x * CELL_SIZE + CELL_SIZE / 2;
+      const centerY = prize.y * CELL_SIZE + CELL_SIZE / 2;
+      
+      ctx.save();
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
+      ctx.shadowBlur = 20;
+      
+      // Trophy shape
+      ctx.fillStyle = PRIZE_COLOR;
+      ctx.font = 'bold 20px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🏆', centerX, centerY);
+      
+      ctx.restore();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawMaze();
+      drawPrize();
+      drawPlayer();
+    }
+
+    function movePlayer(dx, dy) {
+      if (gameWon) return;
+
+      const newX = player.x + dx;
+      const newY = player.y + dy;
+
+      if (newX >= 0 && newX < MAZE_SIZE && newY >= 0 && newY < MAZE_SIZE && maze[newY][newX] === 0) {
+        player.x = newX;
+        player.y = newY;
+
+        if (player.x === prize.x && player.y === prize.y) {
+          gameWon = true;
+          showWinModal();
+        }
+
+        draw();
+      }
+    }
+
+    function showWinModal() {
+      createConfetti();
+      document.getElementById('winModal').style.display = 'block';
+    }
+
+    function createConfetti() {
+      const colors = ['#ffd700', '#ff8c00', '#ffa500', '#ffb733'];
+      for (let i = 0; i < 150; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * window.innerWidth + 'px';
+          confetti.style.top = '-10px';
+          confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.width = Math.random() * 10 + 5 + 'px';
+          confetti.style.height = confetti.style.width;
+          document.body.appendChild(confetti);
+
+          setTimeout(() => confetti.remove(), 3000);
+        }, i * 30);
+      }
+    }
+
+    // Keyboard controls
+    document.addEventListener('keydown', (e) => {
+      switch(e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          movePlayer(0, -1);
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          movePlayer(0, 1);
+          break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          movePlayer(-1, 0);
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          movePlayer(1, 0);
+          break;
+      }
+    });
+
+    document.getElementById('btnUp').addEventListener('click', () => movePlayer(0, -1));
+    document.getElementById('btnDown').addEventListener('click', () => movePlayer(0, 1));
+    document.getElementById('btnLeft').addEventListener('click', () => movePlayer(-1, 0));
+    document.getElementById('btnRight').addEventListener('click', () => movePlayer(1, 0));
+
+    document.getElementById('closeModal').addEventListener('click', () => {
+      document.getElementById('winModal').style.display = 'none';
+    });
+
+    document.getElementById('claimBtn').addEventListener('click', () => {
+      alert('¡Premio del 150% reclamado exitosamente!');
+      document.getElementById('winModal').style.display = 'none';
+    });
+
+    window.addEventListener('click', (e) => {
+      const modal = document.getElementById('winModal');
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+
+    draw();
+  </script>
+</body>
+</html>
