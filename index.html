@@ -372,6 +372,55 @@
       }
     }
 
+    /* Added success message styles */
+    .success-message {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: linear-gradient(135deg, #2d1810 0%, #1a0e0e 100%);
+      padding: 40px 60px;
+      border: 3px solid #ff8c00;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(255, 140, 0, 0.8);
+      z-index: 10000;
+      animation: successPulse 0.5s ease-out;
+    }
+
+    @keyframes successPulse {
+      0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 0;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+      }
+    }
+
+    .success-message h2 {
+      color: #ffd700;
+      font-size: 2.2rem;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+      font-weight: 800;
+    }
+
+    .success-message p {
+      color: #fff;
+      font-size: 1.4rem;
+      margin: 10px 0;
+    }
+
+    .success-highlight {
+      color: #ffd700;
+      font-size: 2rem;
+      font-weight: 800;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    }
+
     @media (max-width: 768px) {
       .game-title {
         font-size: 1.8rem;
@@ -392,6 +441,23 @@
       .modal-content {
         padding: 30px 20px;
         margin: 20% auto;
+      }
+
+      .success-message {
+        padding: 30px 40px;
+        width: 90%;
+      }
+
+      .success-message h2 {
+        font-size: 1.8rem;
+      }
+
+      .success-message p {
+        font-size: 1.2rem;
+      }
+
+      .success-highlight {
+        font-size: 1.6rem;
       }
     }
   </style>
@@ -444,8 +510,15 @@
         <div class="prize-text">150%</div>
         <div class="prize-description">¡Has ganado un bono del 150%!</div>
       </div>
-      <button class="modal-btn" id="claimBtn">Reclamar Premio</button>
+      <button class="modal-btn" id="claimBtn">Aceptar</button>
     </div>
+  </div>
+
+  <!-- Added success message that appears after closing modal -->
+  <div class="success-message" id="successMessage">
+    <h2>¡Felicitaciones!</h2>
+    <p>Conseguiste el</p>
+    <p class="success-highlight">150%</p>
   </div>
 
   <script>
@@ -622,17 +695,24 @@
 
     document.getElementById('closeModal').addEventListener('click', () => {
       document.getElementById('winModal').style.display = 'none';
+      showSuccessMessage();
     });
 
     document.getElementById('claimBtn').addEventListener('click', () => {
-      alert('¡Premio del 150% reclamado exitosamente!');
       document.getElementById('winModal').style.display = 'none';
+      showSuccessMessage();
     });
+
+    function showSuccessMessage() {
+      const successMsg = document.getElementById('successMessage');
+      successMsg.style.display = 'block';
+    }
 
     window.addEventListener('click', (e) => {
       const modal = document.getElementById('winModal');
       if (e.target === modal) {
         modal.style.display = 'none';
+        showSuccessMessage();
       }
     });
 
