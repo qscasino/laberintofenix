@@ -540,8 +540,11 @@
     const PLAYER_COLOR = '#ffd700';
     const PRIZE_COLOR = '#ffd700';
 
+    // 🔒 clave de almacenamiento: marca si el usuario ya ganó el laberinto
+    const STORAGE_KEY = 'laberintoFenixPlayed';
+
     let player = { x: 1, y: 1 };
-    let prize = { x: 13, y: 8 }; // Prize positioned inside the maze in a reachable location
+    let prize = { x: 13, y: 8 }; // Premio dentro del laberinto
     let gameWon = false;
 
     const maze = [
@@ -602,14 +605,11 @@
       ctx.save();
       ctx.shadowColor = 'rgba(255, 215, 0, 0.9)';
       ctx.shadowBlur = 20;
-      
-      // Trophy shape
       ctx.fillStyle = PRIZE_COLOR;
       ctx.font = 'bold 20px Arial';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('🏆', centerX, centerY);
-      
       ctx.restore();
     }
 
@@ -620,8 +620,14 @@
       drawPlayer();
     }
 
+    // ✅ Marca el juego como ya jugado (persistente)
+    function markAsPlayed() {
+      localStorage.setItem(STORAGE_KEY, 'true');
+      gameWon = true;
+    }
+
     function movePlayer(dx, dy) {
-      if (gameWon) return;
+      if (gameWon) return; // si ya ganó (o ya jugó), no se mueve más
 
       const newX = player.x + dx;
       const newY = player.y + dy;
@@ -630,8 +636,9 @@
         player.x = newX;
         player.y = newY;
 
+        // Llega al premio
         if (player.x === prize.x && player.y === prize.y) {
-          gameWon = true;
+          markAsPlayed();    // 🔒 guarda en localStorage
           showWinModal();
         }
 
@@ -662,7 +669,7 @@
       }
     }
 
-    // Keyboard controls
+    // Controles de teclado
     document.addEventListener('keydown', (e) => {
       switch(e.key) {
         case 'ArrowUp':
@@ -688,6 +695,7 @@
       }
     });
 
+    // Controles táctiles
     document.getElementById('btnUp').addEventListener('click', () => movePlayer(0, -1));
     document.getElementById('btnDown').addEventListener('click', () => movePlayer(0, 1));
     document.getElementById('btnLeft').addEventListener('click', () => movePlayer(-1, 0));
@@ -704,6 +712,8 @@
     });
 
     function showSuccessMessage() {
+      // por si acaso, volvemos a marcar como jugado
+      markAsPlayed();
       const successMsg = document.getElementById('successMessage');
       successMsg.style.display = 'block';
     }
@@ -716,7 +726,24 @@
       }
     });
 
-    draw();
+    // 🔁 Inicialización: si ya jugó antes, no puede volver a jugar
+    function initGame() {
+      const alreadyPlayed = localStorage.getItem(STORAGE_KEY) === 'true';
+
+      if (alreadyPlayed) {
+        // bloqueamos el juego y mostramos directamente el mensaje de que ya ganó
+        gameWon = true;
+        // opcional: llevar al jugador visualmente al trofeo
+        player.x = prize.x;
+        player.y = prize.y;
+        draw();
+        setTimeout(showSuccessMessage, 200); // se ve el mensaje de 150%
+      } else {
+        draw(); // juego normal
+      }
+    }
+
+    initGame();
   </script>
 </body>
 </html>
